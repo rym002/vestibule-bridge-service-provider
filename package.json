@@ -1,0 +1,33 @@
+{
+  "name": "@vestibule-link/bridge-assistant",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha -r ts-node/register --extension ts --recursive",
+    "generate-npmrc": "echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc",
+    "clean": "rm .npmrc"
+  },
+  "keywords": [],
+  "author": "Raymond Munian",
+  "license": "ISC",
+  "repository": {
+    "url": "https://github.com/rym002/vestibule-bridge-assistant",
+    "type": "git"
+  },
+  "dependencies": {
+    "@vestibule-link/iot-types": "^1.1.2"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.7.2",
+    "@types/sinon": "^7.0.13",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "sinon": "^7.4.1",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
+  }
+}

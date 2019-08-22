@@ -1,0 +1,2 @@
+# @vestibule-link/bridge-assistant
+* Assistant base for vestibule bridge ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiamx1NXFBQXl1ZHJicE9zQnlwNWxYbnVKOHUra0JMVWFwREs3cTRzbGd4a3lJU2d3SGY2S2hlaGtQYWNBYVB2SXg4UklGc2VxUnVXTk4yOWpDakl6OWN3PSIsIml2UGFyYW1ldGVyU3BlYyI6IkxSdUNrNU5rdlhGUEZjSnYiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
