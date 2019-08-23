@@ -1,6 +1,6 @@
 {
   "name": "@vestibule-link/bridge-assistant",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "type": "git"
   },
   "dependencies": {
+    "@vestibule-link/bridge": "^1.0.0",
     "@vestibule-link/iot-types": "^1.1.2"
   },
   "devDependencies": {

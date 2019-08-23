@@ -4,7 +4,7 @@ import { createSandbox, SinonSandbox } from 'sinon';
 import { assert, expect } from 'chai'
 import { RequestMessage, ResponseMessage, AlexaEndpoint, LocalEndpoint } from '@vestibule-link/iot-types';
 import { EventEmitter } from 'events';
-
+import { listenInit } from '@vestibule-link/bridge'
 class TestEndpointEmitter extends EventEmitter implements EndpointEmitter<'alexa'>{
     endpoint: AlexaEndpoint = {};
     async refresh(deltaId: symbol): Promise<void> {
@@ -120,5 +120,12 @@ describe('assistant', () => {
             expect(endpointEmitter).to.not.be.undefined
         }
 
+    })
+
+    it('should register module',(done)=>{
+        listenInit('assistant',()=>{
+            done()
+            return Promise.resolve()
+        })
     })
 })
