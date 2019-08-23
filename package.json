@@ -17,10 +17,14 @@
     "type": "git"
   },
   "dependencies": {
+  },
+  "peerDependencies": {
     "@vestibule-link/bridge": "^1.0.0",
     "@vestibule-link/iot-types": "^1.1.2"
   },
   "devDependencies": {
+    "@vestibule-link/iot-types": "^1.1.2",
+    "@vestibule-link/bridge": "^1.0.0",
     "@types/chai": "^4.2.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.7.2",
