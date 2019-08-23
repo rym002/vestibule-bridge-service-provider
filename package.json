@@ -4,9 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "prepack": "tsc",
     "test": "mocha -r ts-node/register --extension ts --recursive",
-    "generate-npmrc": "echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc",
     "clean": "rm .npmrc"
   },
   "keywords": [],
