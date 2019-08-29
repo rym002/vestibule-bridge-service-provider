@@ -1,6 +1,6 @@
 {
   "name": "@vestibule-link/bridge-assistant",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@vestibule-link/bridge": "^1.0.0",
+    "@vestibule-link/bridge": "^1.1.0",
     "@vestibule-link/iot-types": "^1.1.2"
   },
   "devDependencies": {
