@@ -12,9 +12,12 @@ export interface Assistant<AT extends AssistantType> {
 export interface EndpointEmitter<A extends AssistantType> {
     emit(event: 'delta', data: SubType<AssistantEndpoint, A>, deltaId: symbol): boolean
     on(event: 'delta', listener: (data: SubType<AssistantEndpoint, A>, deltaId: symbol) => void): this
+    once(event: 'delta', listener: (data: SubType<AssistantEndpoint, A>, deltaId: symbol) => void): this
     removeListener(event: 'delta', listener: (data: SubType<AssistantEndpoint, A>, deltaId: symbol) => void): this
     emit(event: CommandType, commandArgs: string[], request: any, messageId: symbol): boolean
     on(event: CommandType, listener: (commandArgs: string[], request: any, messageId: symbol) => void): this
+    once(event: CommandType, listener: (commandArgs: string[], request: any, messageId: symbol) => void): this
+    removeListener(event: CommandType, listener: (commandArgs: string[], request: any, messageId: symbol) => void): this
     endpoint: SubType<AssistantEndpoint, A>
     refresh(deltaId: symbol): Promise<void>;
 }
@@ -33,6 +36,8 @@ interface ProvidersEmitter {
     emit(event: 'refresh' | 'pushData', assistantType: AssistantType): boolean
     emit(event: CommandType, assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol): boolean
     on(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
+    once(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
+    removeListener(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
     registerAssistant(assistant: Assistant<any>): void;
 }
 
