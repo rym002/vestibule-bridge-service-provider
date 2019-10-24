@@ -18,7 +18,7 @@
   "dependencies": {},
   "peerDependencies": {
     "@vestibule-link/bridge": "^1.1.0",
-    "@vestibule-link/iot-types": "^2.0.1"
+    "@vestibule-link/iot-types": "^2.0.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.4",
