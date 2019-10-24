@@ -20,6 +20,10 @@ export interface EndpointEmitter<A extends AssistantType> {
     removeListener(event: CommandType, listener: (commandArgs: string[], request: any, messageId: symbol) => void): this
     endpoint: SubType<AssistantEndpoint, A>
     refresh(deltaId: symbol): Promise<void>;
+    emit(event: 'settings', data: any): boolean
+    on(event: 'settings', listener: (data: any) => void): this
+    once(event: 'settings', listener: (data: any) => void): this
+    removeListener(event: 'settings', listener: (data: any) => void): this
 }
 
 
@@ -39,6 +43,10 @@ interface ProvidersEmitter {
     once(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
     removeListener(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
     registerAssistant(assistant: Assistant<any>): void;
+    emit(event: 'settings', endpointId: string, data: any): boolean
+    on(event: 'settings', listener: (endpointId: string, data: any) => void): this
+    once(event: 'settings', listener: (endpointId: string, data: any) => void): this
+    removeListener(event: 'settings', listener: (endpointId: string, data: any) => void): this
 }
 
 
@@ -86,6 +94,7 @@ class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter 
             endpoint = assistant.createEndpointEmitter(endpointId);
             assistantsEmitter[assistantType] = endpoint;
             endpoint.on('delta', this.delegateDeltaEndpoint(endpointId, assistantType));
+            endpoint.on('settings', this.delegateEndpointSettings(endpointId));
         }
         return endpoint;
     }
@@ -98,6 +107,11 @@ class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter 
         }
     }
 
+    private delegateEndpointSettings(endpointId: string) {
+        return (data: any) => {
+            this.emit('settings', endpointId, data);
+        }
+    }
     private delegateDeltaEndpoint<AT extends AssistantType>(endpointId: string, assistantType: AT) {
         return (endpoint: SubType<AssistantEndpoint, AT>, deltaId: symbol) => {
             let deltaProvider = this.providerEndpoints.get(deltaId);

@@ -119,16 +119,35 @@ describe('assistant', () => {
         } else {
             expect(endpointEmitter).to.not.be.undefined
         }
+    })
+    it('should emit settings', (done) => {
+        providersEmitter.registerAssistant(new TestAlexaAssistant())
+        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
+            host: 'testHostSettings',
+            provider: 'testProvider'
+        }, true);
+        if (endpointEmitter) {
+            providersEmitter.on('settings', (endpointId, data) => {
+                try {
+                    expect(endpointId).to.equal('testProvider@testHostSettings')
+                    done()
+                } catch (err) {
+                    done(err)
+                }
+            })
+            endpointEmitter.emit('settings', {})
+        } else {
+            expect(endpointEmitter).to.not.be.undefined
+        }
 
     })
-
-    it('should register module',(done)=>{
+    it('should register module', (done) => {
         registerModule({
-            name:'testModule',
-            init:async ()=>{
-                done()    
+            name: 'testModule',
+            init: async () => {
+                done()
             },
-            depends:[startModule()]
+            depends: [startModule()]
         })
     })
 })

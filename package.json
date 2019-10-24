@@ -21,12 +21,12 @@
     "@vestibule-link/iot-types": "^2.0.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.3",
+    "@types/chai": "^4.2.4",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^12.11.2",
+    "@types/node": "^12.11.7",
     "@types/sinon": "^7.5.0",
     "@vestibule-link/bridge": "^1.1.2",
-    "@vestibule-link/iot-types": "^2.0.1",
+    "@vestibule-link/iot-types": "^2.0.2",
     "chai": "^4.2.0",
     "mocha": "^6.2.2",
     "sinon": "^7.5.0",
