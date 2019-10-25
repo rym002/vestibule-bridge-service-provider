@@ -37,21 +37,25 @@ interface ProvidersEmitter {
     once<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
     removeListener<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
     getEndpointEmitter<AT extends AssistantType>(assistantType: AT, localEndpoint: LocalEndpoint, autoCreate?: boolean): SubType<AssistantsEndpointEmitter, AT>
+    getEndpointSettingsEmitter(assistantType: AssistantType): EndpointSettingsEmitter;
     emit(event: 'refresh' | 'pushData', assistantType: AssistantType): boolean
     emit(event: CommandType, assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol): boolean
     on(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
     once(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
     removeListener(event: CommandType, listener: (assistant: AssistantType, commandArgs: string[], request: any, messageId: symbol) => void): this
     registerAssistant(assistant: Assistant<any>): void;
+}
+
+interface EndpointSettingsEmitter {
     emit(event: 'settings', endpointId: string, data: any): boolean
     on(event: 'settings', listener: (endpointId: string, data: any) => void): this
     once(event: 'settings', listener: (endpointId: string, data: any) => void): this
     removeListener(event: 'settings', listener: (endpointId: string, data: any) => void): this
 }
 
-
 class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter {
     readonly endpoints = new Map<string, AssistantsEndpointEmitter>();
+    readonly settingsEmitters = new Map<AssistantType, EndpointSettingsEmitter>();
     private readonly refreshPromises = new Map<symbol, Promise<void>>();
     private readonly providerEndpoints = new Map<symbol, Providers<any>>();
     private assistants = new Map<AssistantType, Assistant<any>>()
@@ -63,8 +67,16 @@ class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter 
         this.on('pushData', this.delegatePush);
     }
 
+    getEndpointSettingsEmitter(assistantType: AssistantType): EndpointSettingsEmitter {
+        const ret = this.settingsEmitters.get(assistantType);
+        if (!ret) {
+            throw new Error('Unknown Assistant ' + assistantType);
+        }
+        return ret;
+    }
     registerAssistant(assistant: Assistant<any>) {
         this.assistants.set(assistant.name, assistant);
+        this.settingsEmitters.set(assistant.name, new EventEmitter());
     }
 
     private getAssistant(assistantType: AssistantType) {
@@ -94,7 +106,7 @@ class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter 
             endpoint = assistant.createEndpointEmitter(endpointId);
             assistantsEmitter[assistantType] = endpoint;
             endpoint.on('delta', this.delegateDeltaEndpoint(endpointId, assistantType));
-            endpoint.on('settings', this.delegateEndpointSettings(endpointId));
+            endpoint.on('settings', this.delegateEndpointSettings(endpointId,assistantType));
         }
         return endpoint;
     }
@@ -107,9 +119,9 @@ class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter 
         }
     }
 
-    private delegateEndpointSettings(endpointId: string) {
+    private delegateEndpointSettings(endpointId: string,assistantType: AssistantType) {
         return (data: any) => {
-            this.emit('settings', endpointId, data);
+            this.getEndpointSettingsEmitter(assistantType).emit('settings', endpointId, data);
         }
     }
     private delegateDeltaEndpoint<AT extends AssistantType>(endpointId: string, assistantType: AT) {

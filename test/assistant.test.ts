@@ -127,7 +127,7 @@ describe('assistant', () => {
             provider: 'testProvider'
         }, true);
         if (endpointEmitter) {
-            providersEmitter.on('settings', (endpointId, data) => {
+            providersEmitter.getEndpointSettingsEmitter('alexa').on('settings', (endpointId, data) => {
                 try {
                     expect(endpointId).to.equal('testProvider@testHostSettings')
                     done()
