@@ -1,6 +1,5 @@
 import { registerModule } from '@vestibule-link/bridge'
-export { topicHandler, responseRouter } from './topic'
-export { CommandType, EndpointEmitter, providersEmitter, Assistant } from './providers'
+export { EndpointEmitter, providersEmitter, Assistant } from './providers'
 
 let moduleId: symbol | undefined;
 

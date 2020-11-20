@@ -18,15 +18,15 @@
   "dependencies": {},
   "peerDependencies": {
     "@vestibule-link/bridge": "^1.1.3",
-    "@vestibule-link/iot-types": "^3.0.0"
+    "@vestibule-link/iot-types": "^3.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",
     "@types/mocha": "^8.0.4",
-    "@types/node": "^12.19.4",
+    "@types/node": "^12.19.6",
     "@types/sinon": "^7.5.2",
     "@vestibule-link/bridge": "^1.1.3",
-    "@vestibule-link/iot-types": "^3.0.0",
+    "@vestibule-link/iot-types": "^3.0.1",
     "chai": "^4.2.0",
     "mocha": "^8.2.1",
     "sinon": "^9.2.1",
