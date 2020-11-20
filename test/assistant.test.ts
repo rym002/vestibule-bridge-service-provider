@@ -1,8 +1,8 @@
 import 'mocha';
-import { providersEmitter, topicHandler, responseRouter, EndpointEmitter, Assistant, startModule } from '../src'
+import { providersEmitter, EndpointEmitter, Assistant, startModule } from '../src'
 import { createSandbox, SinonSandbox } from 'sinon';
 import { assert, expect } from 'chai'
-import { RequestMessage, ResponseMessage, AlexaEndpoint, LocalEndpoint } from '@vestibule-link/iot-types';
+import { RequestMessage, ResponseMessage, AlexaEndpoint } from '@vestibule-link/iot-types';
 import { EventEmitter } from 'events';
 import { registerModule } from '@vestibule-link/bridge'
 class TestEndpointEmitter extends EventEmitter implements EndpointEmitter<'alexa'>{
@@ -13,9 +13,6 @@ class TestEndpointEmitter extends EventEmitter implements EndpointEmitter<'alexa
 
 class TestAlexaAssistant implements Assistant<'alexa'>{
     readonly name: "alexa" = 'alexa';
-    missingEndpointError(le: LocalEndpoint, messageId: symbol): void {
-
-    }
     createEndpointEmitter(endpointId: string): TestEndpointEmitter {
         return new TestEndpointEmitter();
     }
@@ -35,55 +32,22 @@ describe('assistant', () => {
     afterEach(() => {
         sandbox.restore();
     })
-    it('should emit to a provider and listen for response', () => {
-        const providerEmitStub = sandbox.stub(providersEmitter, 'emit');
-        const responseListenerStub = sandbox.stub(responseRouter, 'once');
-        topicHandler('vestibule/testClient/alexa/directive/testProvider/testEndpoint/arg1/arg2', JSON.stringify(testMessage));
-        assert(providerEmitStub.called)
-        assert(responseListenerStub.called)
-    })
-
-    it('should emit to assistant', (done) => {
-        const respMessage: ResponseMessage<any> = {
-            error: false,
-            payload: {}
-        }
-        const providerEmitStub = sandbox.stub(providersEmitter, 'emit');
-        const responseListenerSpy = sandbox.spy(responseRouter, 'once');
-        topicHandler('vestibule/testClient/alexa/directive/testProvider/testEndpoint/arg1/arg2', JSON.stringify(testMessage));
-        assert(providerEmitStub.called)
-        const messageId = responseListenerSpy.args[0][0];
-        responseRouter.on('alexa', (replyTopic, payload) => {
-            expect(replyTopic).eql(testMessage.replyTopic.sync);
-            done();
-        })
-        responseRouter.emit(messageId, respMessage);
-    })
 
     it('should create and endpoint emitter', () => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
-            host: 'testHost1',
-            provider: 'testProvider'
-        }, true)
+        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHost1', true)
         expect(endpointEmitter).to.not.be.undefined
     })
 
     it('should not create an endpoint emitter', () => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
-            host: 'testHost2',
-            provider: 'testProvider'
-        })
+        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHost2')
         expect(endpointEmitter).to.be.undefined
     })
     it('should send a delta', () => {
         const providerEmitStub = sandbox.stub(providersEmitter, 'emit');
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
-            host: 'testHostDelta',
-            provider: 'testProvider'
-        }, true);
+        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostDelta', true);
         const deltaId = Symbol();
         if (endpointEmitter) {
             endpointEmitter.emit('delta', {}, deltaId)
@@ -92,26 +56,9 @@ describe('assistant', () => {
             expect(endpointEmitter).to.not.be.undefined
         }
     })
-    it('should delegate directive to endpoint', () => {
-        providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
-            host: 'testHostEmit',
-            provider: 'testProvider'
-        }, true);
-        if (endpointEmitter) {
-            const endpointEmitStub = sandbox.stub(endpointEmitter, 'emit');
-            providersEmitter.emit('directive', 'alexa', ['testProvider', 'testHostEmit'], {}, Symbol())
-            assert(endpointEmitStub.calledOnce)
-        } else {
-            expect(endpointEmitter).to.not.be.undefined
-        }
-    })
     it('should call refresh on the endpoint', () => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
-            host: 'testHostRefresh',
-            provider: 'testProvider'
-        }, true);
+        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostRefresh', true);
         if (endpointEmitter) {
             const endpointRefreshStub = sandbox.stub(endpointEmitter, 'refresh');
             providersEmitter.emit('refresh', 'alexa');
@@ -122,14 +69,11 @@ describe('assistant', () => {
     })
     it('should emit settings', (done) => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', {
-            host: 'testHostSettings',
-            provider: 'testProvider'
-        }, true);
+        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostSettings', true);
         if (endpointEmitter) {
             providersEmitter.getEndpointSettingsEmitter('alexa').on('settings', (endpointId, data) => {
                 try {
-                    expect(endpointId).to.equal('testProvider@testHostSettings')
+                    expect(endpointId).to.equal('testProvider_testHostSettings')
                     done()
                 } catch (err) {
                     done(err)
