@@ -1,10 +1,10 @@
-import 'mocha';
-import { providersEmitter, EndpointEmitter, Assistant, startModule } from '../src'
-import { createSandbox, SinonSandbox } from 'sinon';
-import { assert, expect } from 'chai'
-import { RequestMessage, ResponseMessage, AlexaEndpoint } from '@vestibule-link/iot-types';
+import { registerModule } from '@vestibule-link/bridge';
+import { AlexaEndpoint, RequestMessage } from '@vestibule-link/iot-types';
+import { assert, expect } from 'chai';
 import { EventEmitter } from 'events';
-import { registerModule } from '@vestibule-link/bridge'
+import 'mocha';
+import { createSandbox, SinonSandbox } from 'sinon';
+import { Assistant, EndpointEmitter, providersEmitter, startModule } from '../src';
 class TestEndpointEmitter extends EventEmitter implements EndpointEmitter<'alexa'>{
     endpoint: AlexaEndpoint = {};
     async refresh(deltaId: symbol): Promise<void> {
@@ -13,7 +13,7 @@ class TestEndpointEmitter extends EventEmitter implements EndpointEmitter<'alexa
 
 class TestAlexaAssistant implements Assistant<'alexa'>{
     readonly name: "alexa" = 'alexa';
-    createEndpointEmitter(endpointId: string): TestEndpointEmitter {
+    async createEndpointEmitter(endpointId: string): Promise<TestEndpointEmitter> {
         return new TestEndpointEmitter();
     }
 }
@@ -39,15 +39,15 @@ describe('assistant', () => {
         expect(endpointEmitter).to.not.be.undefined
     })
 
-    it('should not create an endpoint emitter', () => {
+    it('should not create an endpoint emitter', async () => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHost2')
+        const endpointEmitter = await providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHost2')
         expect(endpointEmitter).to.be.undefined
     })
-    it('should send a delta', () => {
+    it('should send a delta', async () => {
         const providerEmitStub = sandbox.stub(providersEmitter, 'emit');
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostDelta', true);
+        const endpointEmitter = await providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostDelta', true);
         const deltaId = Symbol();
         if (endpointEmitter) {
             endpointEmitter.emit('delta', {}, deltaId)
@@ -56,9 +56,9 @@ describe('assistant', () => {
             expect(endpointEmitter).to.not.be.undefined
         }
     })
-    it('should call refresh on the endpoint', () => {
+    it('should call refresh on the endpoint', async () => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostRefresh', true);
+        const endpointEmitter = await providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostRefresh', true);
         if (endpointEmitter) {
             const endpointRefreshStub = sandbox.stub(endpointEmitter, 'refresh');
             providersEmitter.emit('refresh', 'alexa');
@@ -69,20 +69,20 @@ describe('assistant', () => {
     })
     it('should emit settings', (done) => {
         providersEmitter.registerAssistant(new TestAlexaAssistant())
-        const endpointEmitter = providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostSettings', true);
-        if (endpointEmitter) {
-            providersEmitter.getEndpointSettingsEmitter('alexa').on('settings', (endpointId, data) => {
-                try {
-                    expect(endpointId).to.equal('testProvider_testHostSettings')
-                    done()
-                } catch (err) {
-                    done(err)
+        providersEmitter.getEndpointEmitter('alexa', 'testProvider_testHostSettings', true)
+            .then(endpointEmitter => {
+                if (endpointEmitter) {
+                    providersEmitter.getEndpointSettingsEmitter('alexa').on('settings', (endpointId, data) => {
+                        expect(endpointId).to.equal('testProvider_testHostSettings')
+                        done()
+                    })
+                    endpointEmitter.emit('settings', {})
+                } else {
+                    expect(endpointEmitter).to.not.be.undefined
                 }
-            })
-            endpointEmitter.emit('settings', {})
-        } else {
-            expect(endpointEmitter).to.not.be.undefined
-        }
+            }).catch(err => {
+                done(err)
+            });
 
     })
     it('should register module', (done) => {

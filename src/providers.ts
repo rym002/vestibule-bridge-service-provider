@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 
 export interface Assistant<AT extends AssistantType> {
     readonly name: AT
-    createEndpointEmitter: (endpointId: string) => EndpointEmitter<AT>
+    createEndpointEmitter: (endpointId: string) => Promise<EndpointEmitter<AT>>
 }
 
 export interface EndpointEmitter<A extends AssistantType> {
@@ -29,7 +29,7 @@ interface ProvidersEmitter {
     on<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
     once<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
     removeListener<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
-    getEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, autoCreate?: boolean): SubType<AssistantsEndpointEmitter, AT>
+    getEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, autoCreate?: boolean): Promise<SubType<AssistantsEndpointEmitter, AT>>
     getEndpointSettingsEmitter(assistantType: AssistantType): EndpointSettingsEmitter;
     emit(event: 'refresh' | 'pushData', assistantType: AssistantType): boolean
     registerAssistant(assistant: Assistant<any>): void;
@@ -75,22 +75,22 @@ class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter 
         return assistant;
     }
 
-    getEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, autoCreate = false): SubType<AssistantsEndpointEmitter, AT> {
+    async getEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, autoCreate = false): Promise<SubType<AssistantsEndpointEmitter, AT>> {
         let assistantsEmitter = this.endpoints.get(endpointId);
         if (autoCreate && !assistantsEmitter) {
             assistantsEmitter = {};
             this.endpoints.set(endpointId, assistantsEmitter);
         }
         if (assistantsEmitter) {
-            return this.getAssistantEndpointEmitter(assistantType, endpointId, assistantsEmitter, autoCreate)
+            return await this.getAssistantEndpointEmitter(assistantType, endpointId, assistantsEmitter, autoCreate)
         }
     }
 
-    private getAssistantEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, assistantsEmitter: AssistantsEndpointEmitter, autoCreate: boolean): SubType<AssistantsEndpointEmitter, AT> {
+    private async getAssistantEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, assistantsEmitter: AssistantsEndpointEmitter, autoCreate: boolean): Promise<SubType<AssistantsEndpointEmitter, AT>> {
         let endpoint = assistantsEmitter[assistantType];
         if (!endpoint && autoCreate) {
             const assistant = this.getAssistant(assistantType);
-            endpoint = assistant.createEndpointEmitter(endpointId);
+            endpoint = await assistant.createEndpointEmitter(endpointId);
             assistantsEmitter[assistantType] = endpoint;
             endpoint.on('delta', this.delegateDeltaEndpoint(endpointId, assistantType));
             endpoint.on('settings', this.delegateEndpointSettings(endpointId, assistantType));
