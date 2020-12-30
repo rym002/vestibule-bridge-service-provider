@@ -1,12 +1,12 @@
 import { registerModule } from '@vestibule-link/bridge'
-export { EndpointEmitter, providersEmitter, Assistant } from './providers'
+export { serviceProviderManager, ServiceProviderEndpointFactory, ServiceProviderConnectors as ServiceProviderEndpointTypes, ServiceProviderType } from './providers'
 
 let moduleId: symbol | undefined;
 
 export function startModule() {
     if (!moduleId) {
         moduleId = registerModule({
-            name: 'assistant',
+            name: 'service-provider',
             init: async () => {
             }
         })

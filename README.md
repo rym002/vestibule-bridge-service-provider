@@ -1,2 +1,2 @@
-# @vestibule-link/bridge-assistant
-* Assistant base for vestibule bridge ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiamx1NXFBQXl1ZHJicE9zQnlwNWxYbnVKOHUra0JMVWFwREs3cTRzbGd4a3lJU2d3SGY2S2hlaGtQYWNBYVB2SXg4UklGc2VxUnVXTk4yOWpDakl6OWN3PSIsIml2UGFyYW1ldGVyU3BlYyI6IkxSdUNrNU5rdlhGUEZjSnYiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+# @vestibule-link/bridge-service-provider
+* Assistant base for vestibule bridge ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiQzF3MC9tV0QwVzlFK3ZOVG0yTnQ3bFFTS1h3T1Z4c1AvWGhOamZuVGgvUm1pRHR3b0d4Y3NNazhXZXVzdmdVbkNsVE1kakZJdXlJVUdRYTFJTWNMZ21NPSIsIml2UGFyYW1ldGVyU3BlYyI6InlEaU1nbmdHUEdWcm41UWoiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)

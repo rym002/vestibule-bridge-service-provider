@@ -1,158 +1,70 @@
-import { AssistantEndpoint, AssistantType, Providers, SubType } from "@vestibule-link/iot-types";
-import { EventEmitter } from "events";
 
-export interface Assistant<AT extends AssistantType> {
-    readonly name: AT
-    createEndpointEmitter: (endpointId: string) => Promise<EndpointEmitter<AT>>
+/**
+ * Merge declaration to add new service providers
+ */
+export interface ServiceProviderConnectors {
 }
 
-export interface EndpointEmitter<A extends AssistantType> {
-    emit(event: 'delta', data: SubType<AssistantEndpoint, A>, deltaId: symbol): boolean
-    on(event: 'delta', listener: (data: SubType<AssistantEndpoint, A>, deltaId: symbol) => void): this
-    once(event: 'delta', listener: (data: SubType<AssistantEndpoint, A>, deltaId: symbol) => void): this
-    removeListener(event: 'delta', listener: (data: SubType<AssistantEndpoint, A>, deltaId: symbol) => void): this
-    endpoint: SubType<AssistantEndpoint, A>
-    refresh(deltaId: symbol): Promise<void>;
-    emit(event: 'settings', data: any): boolean
-    on(event: 'settings', listener: (data: any) => void): this
-    once(event: 'settings', listener: (data: any) => void): this
-    removeListener(event: 'settings', listener: (data: any) => void): this
+export type ServiceProviderType = keyof ServiceProviderConnectors
+
+/**
+ * Service Provider implements this factory to create endpoint connectors
+ */
+export interface ServiceProviderEndpointFactory<P extends ServiceProviderType> {
+    readonly name: P
+    createEndpointConnector(endpointId: string): Promise<ServiceProviderConnectors[P]>
 }
 
+/**
+ * Single endpoint can connect to multiple service providers
+ */
+class ServiceProviderManager {
+    readonly endpoints = new Map<string, ServiceProviderConnectors>();
+    private providers = new Map<ServiceProviderType, ServiceProviderEndpointFactory<ServiceProviderType>>()
 
-type AssistantsEndpointEmitter = {
-    [T in AssistantType]?: EndpointEmitter<T>
-}
-
-interface ProvidersEmitter {
-    emit<A extends AssistantType>(event: A, provider: Providers<A>): boolean
-    on<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
-    once<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
-    removeListener<A extends AssistantType>(event: A, listener: (data: Providers<A>) => void): this
-    getEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, autoCreate?: boolean): Promise<SubType<AssistantsEndpointEmitter, AT>>
-    getEndpointSettingsEmitter(assistantType: AssistantType): EndpointSettingsEmitter;
-    emit(event: 'refresh' | 'pushData', assistantType: AssistantType): boolean
-    registerAssistant(assistant: Assistant<any>): void;
-}
-
-interface EndpointSettingsEmitter {
-    emit(event: 'settings', endpointId: string, data: any): boolean
-    on(event: 'settings', listener: (endpointId: string, data: any) => void): this
-    once(event: 'settings', listener: (endpointId: string, data: any) => void): this
-    removeListener(event: 'settings', listener: (endpointId: string, data: any) => void): this
-}
-
-class ProvidersEmitterNotifier extends EventEmitter implements ProvidersEmitter {
-    readonly endpoints = new Map<string, AssistantsEndpointEmitter>();
-    readonly settingsEmitters = new Map<AssistantType, EndpointSettingsEmitter>();
-    private readonly refreshPromises = new Map<symbol, Promise<void>>();
-    private readonly providerEndpoints = new Map<symbol, Providers<any>>();
-    private assistants = new Map<AssistantType, Assistant<any>>()
-
-    constructor() {
-        super();
-        this.on('refresh', this.delegateRefresh);
-        this.on('pushData', this.delegatePush);
+    registerServiceProvider<P extends ServiceProviderType>(provider: ServiceProviderEndpointFactory<P>): void {
+        this.providers.set(provider.name, provider);
     }
 
-    getEndpointSettingsEmitter(assistantType: AssistantType): EndpointSettingsEmitter {
-        const ret = this.settingsEmitters.get(assistantType);
-        if (!ret) {
-            throw new Error('Unknown Assistant ' + assistantType);
+    private getServiceProviderFactory(providerType: ServiceProviderType) {
+        const provider = this.providers.get(providerType);
+        if (!provider) {
+            throw new Error(`Invalid Service Provider ${providerType}`)
         }
-        return ret;
-    }
-    registerAssistant(assistant: Assistant<any>) {
-        this.assistants.set(assistant.name, assistant);
-        this.settingsEmitters.set(assistant.name, new EventEmitter());
+        return provider;
     }
 
-    private getAssistant(assistantType: AssistantType) {
-        const assistant = this.assistants.get(assistantType);
-        if (!assistant) {
-            throw new Error('Invalid Assistant ' + assistantType)
-        }
-        return assistant;
+    async getEndpointConnector<P extends ServiceProviderType>(providerName: P, endpointId: string, autoCreate = false): Promise<ServiceProviderConnectors[P]> {
+        const endpointProviders = this.getEndpointServiceProviders(endpointId, autoCreate)
+        return await this.getServiceProviderEndpointConnector(providerName, endpointId, endpointProviders, autoCreate)
     }
 
-    async getEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, autoCreate = false): Promise<SubType<AssistantsEndpointEmitter, AT>> {
-        let assistantsEmitter = this.endpoints.get(endpointId);
-        if (autoCreate && !assistantsEmitter) {
-            assistantsEmitter = {};
-            this.endpoints.set(endpointId, assistantsEmitter);
+    private getEndpointServiceProviders(endpointId: string, autoCreate: boolean): ServiceProviderConnectors {
+        let endpointProviders = this.endpoints.get(endpointId);
+        if (autoCreate && !endpointProviders) {
+            endpointProviders = {};
+            this.endpoints.set(endpointId, endpointProviders);
         }
-        if (assistantsEmitter) {
-            return await this.getAssistantEndpointEmitter(assistantType, endpointId, assistantsEmitter, autoCreate)
+        if (!endpointProviders) {
+            throw new Error(`Endpoint Not Found ${endpointId}`)
         }
+        return endpointProviders
     }
 
-    private async getAssistantEndpointEmitter<AT extends AssistantType>(assistantType: AT, endpointId: string, assistantsEmitter: AssistantsEndpointEmitter, autoCreate: boolean): Promise<SubType<AssistantsEndpointEmitter, AT>> {
-        let endpoint = assistantsEmitter[assistantType];
+    private async getServiceProviderEndpointConnector<P extends ServiceProviderType>(providerName: P, endpointId: string, endpointServiceProviders: ServiceProviderConnectors, autoCreate: boolean): Promise<ServiceProviderConnectors[P]> {
+        let endpoint = endpointServiceProviders[providerName];
         if (!endpoint && autoCreate) {
-            const assistant = this.getAssistant(assistantType);
-            endpoint = await assistant.createEndpointEmitter(endpointId);
-            assistantsEmitter[assistantType] = endpoint;
-            endpoint.on('delta', this.delegateDeltaEndpoint(endpointId, assistantType));
-            endpoint.on('settings', this.delegateEndpointSettings(endpointId, assistantType));
+            const serviceProvider = this.getServiceProviderFactory(providerName);
+            endpoint = await serviceProvider.createEndpointConnector(endpointId);
+            endpointServiceProviders[providerName] = endpoint;
         }
-        return endpoint;
-    }
 
-    private emitAssistant(assistantType: AssistantType, deltaId: symbol) {
-        const deltaProvider = this.providerEndpoints.get(deltaId);
-        if (deltaProvider) {
-            this.emit(assistantType, deltaProvider);
-            this.providerEndpoints.delete(deltaId);
+        if (!endpoint) {
+            throw new Error(`Endpoint Service Provider Not found ${endpointId}`)
+        } else {
+            return endpoint;
         }
-    }
-
-    private delegateEndpointSettings(endpointId: string, assistantType: AssistantType) {
-        return (data: any) => {
-            this.getEndpointSettingsEmitter(assistantType).emit('settings', endpointId, data);
-        }
-    }
-    private delegateDeltaEndpoint<AT extends AssistantType>(endpointId: string, assistantType: AT) {
-        return (endpoint: SubType<AssistantEndpoint, AT>, deltaId: symbol) => {
-            let deltaProvider = this.providerEndpoints.get(deltaId);
-            if (!deltaProvider) {
-                deltaProvider = {};
-                this.providerEndpoints.set(deltaId, deltaProvider);
-            }
-            deltaProvider[endpointId] = endpoint;
-            if (!this.refreshPromises.has(deltaId)) {
-                this.emitAssistant(assistantType, deltaId);
-            }
-        }
-    }
-
-    private delegatePush<AT extends AssistantType>(assistantType: AT) {
-        const providerEndpoints: Providers<AT> = {};
-        this.endpoints.forEach((assistantEndpoint, id) => {
-            const endpointEmitter = assistantEndpoint[assistantType];
-            if (endpointEmitter) {
-                providerEndpoints[id] = endpointEmitter.endpoint;
-            }
-        })
-        this.emit(assistantType, providerEndpoints);
-    }
-
-    private delegateRefresh(assistantType: AssistantType): void {
-        const deltaId = Symbol();
-        const promises: Promise<void>[] = []
-        this.endpoints.forEach(endpoint => {
-            const endpointEmitter = endpoint[assistantType];
-            if (endpointEmitter) {
-                const promise = endpointEmitter.refresh(deltaId);
-                promises.push(promise);
-            }
-        })
-        const refreshPromise = Promise.all(promises)
-            .then(values => {
-                this.refreshPromises.delete(deltaId);
-                this.emitAssistant(assistantType, deltaId);
-            })
-        this.refreshPromises.set(deltaId, refreshPromise);
     }
 }
 
-export const providersEmitter: ProvidersEmitter = new ProvidersEmitterNotifier();
+export const serviceProviderManager = new ServiceProviderManager();
