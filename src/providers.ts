@@ -3,12 +3,13 @@
  * Merge declaration to add new service providers
  */
 export interface ServiceProviderConnectors {
-    [key: string]: EndpointConnector|undefined
+    [key: string]: EndpointConnector | undefined
 }
 
 export type ServiceProviderType = keyof ServiceProviderConnectors
 
 export interface EndpointConnector {
+    readonly endpointId: string
     refresh(deltaId: symbol): Promise<void>
 }
 /**
