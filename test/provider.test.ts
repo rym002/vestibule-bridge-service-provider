@@ -1,7 +1,7 @@
 import { registerModule } from '@vestibule-link/bridge';
 import { expect, use } from 'chai';
 import 'mocha';
-import { ServiceProviderEndpointFactory, serviceProviderManager, startModule } from '../src';
+import { EndpointConnector, ServiceProviderEndpointFactory, serviceProviderManager, startModule } from '../src';
 const chaiAsPromised = require('chai-as-promised')
 
 use(chaiAsPromised)
@@ -13,8 +13,11 @@ declare module '../src/providers' {
     }
 }
 
-class TestEndpointConnector {
+class TestEndpointConnector implements EndpointConnector{
     constructor(readonly endpointId: string) {
+
+    }
+    async refresh(deltaId:symbol){
 
     }
 }

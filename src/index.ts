@@ -1,5 +1,5 @@
 import { registerModule } from '@vestibule-link/bridge'
-export { serviceProviderManager, ServiceProviderEndpointFactory, ServiceProviderConnectors as ServiceProviderEndpointTypes, ServiceProviderType } from './providers'
+export { serviceProviderManager, ServiceProviderEndpointFactory, ServiceProviderConnectors, ServiceProviderType, EndpointConnector } from './providers'
 
 let moduleId: symbol | undefined;
 

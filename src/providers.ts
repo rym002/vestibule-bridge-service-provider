@@ -3,10 +3,14 @@
  * Merge declaration to add new service providers
  */
 export interface ServiceProviderConnectors {
+    [key: string]: EndpointConnector|undefined
 }
 
 export type ServiceProviderType = keyof ServiceProviderConnectors
 
+export interface EndpointConnector {
+    refresh(deltaId: symbol): Promise<void>
+}
 /**
  * Service Provider implements this factory to create endpoint connectors
  */
